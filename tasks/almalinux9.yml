@@ -1,0 +1,67 @@
+---
+# tasks file for roles/mysql57
+- name: Check installed MySQL
+  command: bash -lc "mysql --version"
+  register: mysql_exists
+  changed_when: false
+  ignore_errors: true
+
+    # - name: remove mariadb-libs
+    #  become: true
+    #  yum:
+    #    state: absent
+    #    name: mariadb-libs
+    #  when:
+    #    - mysql_exists is failed
+
+    # - name: install mysql repository
+    #  become: true
+    #  yum:
+    #    name: "{{ mysql57.repo_url }}"
+    #    state: present
+    #  when:
+  #    - mysql_exists is failed
+
+- name: Install python
+  become: true
+  dnf:
+    name: "python{{ python_version }}"
+    state: 'present'
+
+- name: Install mysql
+  become: true
+  dnf:
+    name: "{{ item }}"
+    state: present
+  with_items:
+    - mysql
+    - mysql-devel
+    - mysql-server
+    - mysql-server
+    - python3-PyMySQL
+  when: mysql_exists is failed
+
+- name: Running and enabled mysqld
+  become: true
+  service:
+    name: mysqld
+    state: started
+    enabled: true
+  when:
+    - mysql_exists is failed
+
+      # - name: Make sure pymysql is present
+      #  become: true # needed if the other tasks are not played as root
+      #  pip:
+      #    name: PyMySQL
+    #    state: present
+
+
+- name: Change root user password
+  command: |
+    mysql -u root  -e "ALTER USER 'root'@'localhost' IDENTIFIED BY '{{ mysql_root_password }}';"
+  when:
+    - mysql_exists is failed
+
+# - include: create_db.yml
+# - include: create_user.yml

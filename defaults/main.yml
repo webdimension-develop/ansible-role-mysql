@@ -1,0 +1,4 @@
+---
+# defaults file for src/roles/mysql
+python_version: 39
+mysql_root_password: "{{ secret.mysql.root_password }}"
